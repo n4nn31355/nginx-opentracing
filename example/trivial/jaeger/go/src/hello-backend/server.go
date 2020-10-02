@@ -30,6 +30,20 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		opentracing.ChildOf(wireContext))
 	defer span.Finish()
 	tm := time.Now().Format(time.RFC1123)
+	w.Header().Set("x_service", "handler1")
+	w.Write([]byte("The time is " + tm))
+}
+
+func handler2(w http.ResponseWriter, r *http.Request) {
+	wireContext, _ := opentracing.GlobalTracer().Extract(
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(r.Header))
+	span := opentracing.StartSpan(
+		"/",
+		opentracing.ChildOf(wireContext))
+	defer span.Finish()
+	tm := time.Now().Format(time.RFC1123)
+	w.Header().Set("x_service", "handler2")
 	w.Write([]byte("The time is " + tm))
 }
 
@@ -59,5 +73,6 @@ func main() {
 	defer closer.Close()
 
 	http.HandleFunc("/", handler)
+	http.HandleFunc("/2", handler2)
 	http.ListenAndServe(":9001", nil)
 }
